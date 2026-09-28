@@ -1,0 +1,3367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo digitalizado - Molino de martillos</title>
+
+<!-- =========================================================
+     THREE.JS
+     ========================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<!-- =========================================================
+     CHART.JS
+     ========================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef2f5;
+    color: #18242d;
+}
+
+header {
+    background: #173b56;
+    color: white;
+    padding: 22px 28px;
+}
+
+header h1 {
+    margin: 0 0 7px;
+    font-size: 25px;
+}
+
+header p {
+    margin: 0;
+    color: #d9e6ee;
+}
+
+.container {
+    max-width: 1450px;
+    margin: auto;
+    padding: 20px;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    margin-bottom: 18px;
+}
+
+.card h2 {
+    font-size: 18px;
+    color: #173b56;
+    margin: 0 0 15px;
+}
+
+.card h3 {
+    color: #173b56;
+    margin-top: 20px;
+}
+
+.control {
+    margin-bottom: 18px;
+}
+
+.control label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+.value {
+    background: #eaf1f5;
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #173b56;
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: #28739b;
+    cursor: pointer;
+}
+
+input[type="number"] {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #cdd7dc;
+    border-radius: 7px;
+    font-size: 14px;
+}
+
+button {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 13px;
+    background: #173b56;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 3px 2px;
+}
+
+button:hover {
+    opacity: .88;
+}
+
+.secondary {
+    background: #657784;
+}
+
+.viewer {
+    height: 560px;
+    position: relative;
+    border-radius: 11px;
+    overflow: hidden;
+    background: #dce5ea;
+}
+
+.viewer canvas {
+    display: block;
+}
+
+.legend,
+.status {
+    position: absolute;
+    top: 14px;
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    z-index: 5;
+}
+
+.legend {
+    left: 14px;
+    background: rgba(255,255,255,.92);
+}
+
+.status {
+    right: 14px;
+    background: rgba(23,59,86,.92);
+    color: white;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 10px;
+}
+
+.metric {
+    background: #f2f6f8;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.metric small {
+    display: block;
+    color: #687782;
+    margin-bottom: 5px;
+}
+
+.metric strong {
+    font-size: 19px;
+    color: #173b56;
+}
+
+.formula-box {
+    background: #f7fafc;
+    border: 1px solid #dce5ea;
+    border-left: 4px solid #28739b;
+    padding: 14px;
+    border-radius: 8px;
+    margin: 12px 0;
+}
+
+.formula {
+    font-family: "Times New Roman", serif;
+    font-size: 18px;
+    color: #172b38;
+    margin: 8px 0;
+}
+
+.substitution {
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    background: #edf3f6;
+    padding: 9px;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+.tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.tag-article {
+    background: #dcecf7;
+    color: #185477;
+}
+
+.tag-html {
+    background: #e4f4e9;
+    color: #26733f;
+}
+
+.tag-assumption {
+    background: #fff0cf;
+    color: #856000;
+}
+
+.chart {
+    height: 320px;
+}
+
+.chart canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 9px;
+    border-bottom: 1px solid #dce3e7;
+}
+
+th {
+    background: #edf3f6;
+    color: #173b56;
+}
+
+td code {
+    background: #f0f3f5;
+    padding: 2px 5px;
+    border-radius: 4px;
+}
+
+.note {
+    background: #fff7df;
+    border-left: 4px solid #c89519;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.good {
+    background: #eaf7ee;
+    border-left: 4px solid #299653;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.warning {
+    background: #fff0ed;
+    border-left: 4px solid #c74b38;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.info {
+    background: #eaf4fb;
+    border-left: 4px solid #28739b;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.small {
+    font-size: 12px;
+    color: #63717a;
+}
+
+.highlight {
+    font-weight: bold;
+    color: #173b56;
+}
+
+footer {
+    text-align: center;
+    color: #6b7780;
+    font-size: 12px;
+    padding: 18px;
+}
+
+.fatigue-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.fatigue-card {
+    background: #f5f8fa;
+    padding: 12px;
+    border-radius: 9px;
+}
+
+.fatigue-card small {
+    display: block;
+    color: #687782;
+}
+
+.fatigue-card strong {
+    display: block;
+    font-size: 20px;
+    color: #173b56;
+    margin-top: 5px;
+}
+
+.status-ok {
+    color: #247a42;
+    font-weight: bold;
+}
+
+.status-warning {
+    color: #a05b00;
+    font-weight: bold;
+}
+
+@media(max-width:1000px) {
+
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics {
+        grid-template-columns: repeat(2,1fr);
+    }
+
+    .fatigue-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media(max-width:600px) {
+
+    .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .fatigue-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .viewer {
+        height: 450px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<h1>
+Modelo digitalizado — Molino de martillos con martillo en V
+</h1>
+
+<p>
+Modelo 3D interactivo, parámetros de diseño, cálculos mecánicos,
+análisis de esfuerzo, fatiga y gráficas
+</p>
+
+</header>
+
+
+<main class="container">
+
+<div class="layout">
+
+<!-- =========================================================
+     PANEL IZQUIERDO
+     ========================================================= -->
+
+<aside>
+
+<section class="card">
+
+<h2>Parámetros modificables</h2>
+
+<div class="control">
+
+<label>
+Ángulo de cabeza
+<span class="value" id="aOut">160°</span>
+</label>
+
+<input
+id="a"
+type="range"
+min="150"
+max="160"
+step="1"
+value="160"
+>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Ángulo de inclinación
+<span class="value" id="bOut">110°</span>
+</label>
+
+<input
+id="b"
+type="range"
+min="100"
+max="120"
+step="1"
+value="110"
+>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Distancia de cabeza
+<span class="value" id="cOut">24 mm</span>
+</label>
+
+<input
+id="c"
+type="range"
+min="24"
+max="30"
+step="1"
+value="24"
+>
+
+</div>
+
+
+<div class="control">
+
+<label>
+Velocidad del rotor
+<span class="value" id="rpmOut">4400 rpm</span>
+</label>
+
+<input
+id="rpm"
+type="range"
+min="1000"
+max="4400"
+step="100"
+value="4400"
+>
+
+</div>
+
+
+<button id="reset">
+Valores del artículo
+</button>
+
+<button id="toggle" class="secondary">
+Pausar rotor
+</button>
+
+</section>
+
+
+<section class="card">
+
+<h2>Datos del sistema</h2>
+
+<table>
+
+<tr>
+<td>Potencia</td>
+<td>3 kW</td>
+</tr>
+
+<tr>
+<td>Martillos</td>
+<td>24</td>
+</tr>
+
+<tr>
+<td>Velocidad nominal</td>
+<td>4400 rpm</td>
+</tr>
+
+<tr>
+<td>Ancho de criba B</td>
+<td>170 mm</td>
+</tr>
+
+<tr>
+<td>Diámetro de orificio</td>
+<td>3 mm</td>
+</tr>
+
+<tr>
+<td>R₁</td>
+<td>195 mm</td>
+</tr>
+
+<tr>
+<td>Lᵢ</td>
+<td>92 mm</td>
+</tr>
+
+<tr>
+<td>ΔR</td>
+<td>9 mm</td>
+</tr>
+
+<tr>
+<td>Material</td>
+<td>Acero 45#</td>
+</tr>
+
+<tr>
+<td>Límite elástico</td>
+<td>355 MPa</td>
+</tr>
+
+</table>
+
+</section>
+
+
+<section class="card">
+
+<h2>Funcionamiento</h2>
+
+<div class="note">
+
+El material entra por la tolva, recibe impactos de los martillos
+y posteriormente interactúa con la criba. Las partículas que
+cumplen el tamaño de paso pueden salir del molino.
+
+</div>
+
+</section>
+
+</aside>
+
+
+<!-- =========================================================
+     MODELO Y RESULTADOS
+     ========================================================= -->
+
+<section>
+
+<section class="card">
+
+<div class="viewer" id="viewer">
+
+<div class="legend">
+
+<b>Modelo 3D esquemático</b><br>
+
+Azul: rotor y discos<br>
+Naranja: martillos<br>
+Verde: eje<br>
+Gris: carcasa/criba
+
+</div>
+
+<div class="status" id="status">
+Rotor: girando
+</div>
+
+</div>
+
+</section>
+
+
+<section class="card">
+
+<h2>Resultados calculados</h2>
+
+<div class="metrics">
+
+<div class="metric">
+
+<small>
+Velocidad angular
+</small>
+
+<strong id="omega">
+460.77 rad/s
+</strong>
+
+</div>
+
+
+<div class="metric">
+
+<small>
+Frecuencia
+</small>
+
+<strong id="freq">
+73.33 Hz
+</strong>
+
+</div>
+
+
+<div class="metric">
+
+<small>
+Espesor calculado
+</small>
+
+<strong id="thickness">
+2.98 mm
+</strong>
+
+</div>
+
+
+<div class="metric">
+
+<small>
+Espesor adoptado
+</small>
+
+<strong>
+3.00 mm
+</strong>
+
+</div>
+
+
+<div class="metric">
+
+<small>
+Fuerza de impacto
+</small>
+
+<strong id="force">
+195.2 N
+</strong>
+
+</div>
+
+
+<div class="metric">
+
+<small>
+Esfuerzo máximo ANSYS
+</small>
+
+<strong>
+26.37 MPa
+</strong>
+
+</div>
+
+
+<div class="metric">
+
+<small>
+Deformación total ANSYS
+</small>
+
+<strong>
+31.9 μm
+</strong>
+
+</div>
+
+
+<div class="metric">
+
+<small>
+Factor de seguridad estático
+</small>
+
+<strong id="safety">
+13.46
+</strong>
+
+</div>
+
+</div>
+
+</section>
+
+
+<section class="card">
+
+<h2>Geometría derivada</h2>
+
+<table>
+
+<tr>
+<th>Parámetro</th>
+<th>Resultado</th>
+<th>Ecuación/criterio</th>
+</tr>
+
+<tr>
+<td>Longitud radial r₁</td>
+<td id="r1">94 mm</td>
+<td>R₁ − ΔR − Lᵢ</td>
+</tr>
+
+<tr>
+<td>Área de martillo tradicional</td>
+<td>252.5 mm²</td>
+<td>Artículo</td>
+</tr>
+
+<tr>
+<td>Área efectiva del martillo V</td>
+<td>348 mm²</td>
+<td>Artículo</td>
+</tr>
+
+<tr>
+<td>Relación de áreas</td>
+<td>1.38×</td>
+<td>348 / 252.5</td>
+</tr>
+
+</table>
+
+</section>
+
+</section>
+
+</div>
+
+
+<!-- =========================================================
+     CÁLCULOS DE ESFUERZO
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Cálculo de esfuerzo y resistencia estática
+</h2>
+
+<div class="info">
+
+<span class="tag tag-article">
+RESULTADO REPORTADO POR EL ARTÍCULO
+</span>
+
+<br>
+
+El análisis estructural del artículo se realizó mediante ANSYS.
+Por ello, el esfuerzo equivalente máximo y la deformación total
+se muestran como resultados del análisis numérico, mientras que
+las ecuaciones mostradas aquí permiten visualizar los cálculos
+mecánicos que sí pueden reproducirse directamente en el modelo HTML.
+
+</div>
+
+
+<h3>1. Fuerza de impacto</h3>
+
+<div class="formula-box">
+
+<div class="formula">
+P Δt = m Δv
+</div>
+
+<div class="formula">
+P = m(v₁ − v₂) / Δt
+</div>
+
+<div class="substitution" id="forceEquation">
+P = 0.00493 × (85.2 − 45.6) / 0.001
+</div>
+
+<div class="formula">
+P = <span id="forceFormulaResult">195.2</span> N
+</div>
+
+</div>
+
+
+<h3>2. Esfuerzo nominal de referencia</h3>
+
+<div class="formula-box">
+
+<p>
+Para visualizar la relación entre la fuerza de impacto y el área
+efectiva del martillo se calcula un esfuerzo nominal de referencia:
+</p>
+
+<div class="formula">
+σ<sub>nom</sub> = P / A
+</div>
+
+<div class="substitution" id="nominalStressEquation">
+σnom = 195.2 N / 348 mm²
+</div>
+
+<div class="formula">
+σ<sub>nom</sub> =
+<span id="nominalStress">0.56</span> MPa
+</div>
+
+</div>
+
+
+<h3>3. Esfuerzo máximo obtenido mediante ANSYS</h3>
+
+<div class="formula-box">
+
+<span class="tag tag-article">
+ANSYS / ARTÍCULO
+</span>
+
+<div class="formula">
+σ<sub>max</sub> = 26.37 MPa
+</div>
+
+<p>
+El máximo esfuerzo se concentra en la zona próxima al agujero
+del pasador. Este valor corresponde al resultado reportado por
+el análisis estático del artículo.
+</p>
+
+</div>
+
+
+<h3>4. Comparación de esfuerzos</h3>
+
+<table>
+
+<tr>
+<th>Magnitud</th>
+<th>Valor</th>
+<th>Origen</th>
+</tr>
+
+<tr>
+<td>Esfuerzo nominal de referencia</td>
+<td id="stressNomTable">0.56 MPa</td>
+<td>Cálculo HTML: P/A</td>
+</tr>
+
+<tr>
+<td>Esfuerzo equivalente máximo</td>
+<td>26.37 MPa</td>
+<td>ANSYS / artículo</td>
+</tr>
+
+<tr>
+<td>Límite elástico</td>
+<td>355 MPa</td>
+<td>Propiedad del material</td>
+</tr>
+
+</table>
+
+
+<h3>5. Factor de seguridad estático</h3>
+
+<div class="formula-box">
+
+<div class="formula">
+FS = σ<sub>y</sub> / σ<sub>max</sub>
+</div>
+
+<div class="substitution">
+FS = 355 MPa / 26.37 MPa
+</div>
+
+<div class="formula">
+FS = <span id="fsEquation">13.46</span>
+</div>
+
+</div>
+
+<div class="good">
+
+<b>Interpretación:</b>
+
+El factor de seguridad estático se calcula comparando el límite
+elástico del acero 45# con el esfuerzo máximo reportado por ANSYS.
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     ECUACIONES PRINCIPALES
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Resumen de ecuaciones utilizadas
+</h2>
+
+<table>
+
+<tr>
+<th>Magnitud</th>
+<th>Ecuación</th>
+<th>Resultado</th>
+</tr>
+
+<tr>
+<td>Velocidad angular</td>
+<td>ω = 2πn / 60</td>
+<td id="eqOmega">460.77 rad/s</td>
+</tr>
+
+<tr>
+<td>Frecuencia</td>
+<td>f = n / 60</td>
+<td id="eqFreq">73.33 Hz</td>
+</tr>
+
+<tr>
+<td>Espesor</td>
+<td>Z = K₂B / δ</td>
+<td id="eqThickness">2.98 mm</td>
+</tr>
+
+<tr>
+<td>Fuerza de impacto</td>
+<td>P = mΔv / Δt</td>
+<td id="eqForce">195.2 N</td>
+</tr>
+
+<tr>
+<td>Esfuerzo nominal</td>
+<td>σnom = P/A</td>
+<td id="eqStress">0.56 MPa</td>
+</tr>
+
+<tr>
+<td>Factor de seguridad</td>
+<td>FS = σy / σmax</td>
+<td id="eqFS">13.46</td>
+</tr>
+
+<tr>
+<td>Longitud radial</td>
+<td>r₁ = R₁ − ΔR − Lᵢ</td>
+<td id="eqR">94 mm</td>
+</tr>
+
+</table>
+
+</section>
+
+
+<!-- =========================================================
+     GRÁFICA FRECUENCIA
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Gráfica — Frecuencia de excitación en función de la velocidad
+</h2>
+
+<div class="formula-box">
+
+<div class="formula">
+f = n / 60
+</div>
+
+<div class="substitution">
+Para n = 4400 rpm:
+f = 4400 / 60 = 73.33 Hz
+</div>
+
+</div>
+
+<div class="chart">
+
+<canvas id="freqChart"></canvas>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     GRÁFICA DE ESFUERZO
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Gráfica — Esfuerzo nominal de referencia en función de la velocidad
+</h2>
+
+<div class="info">
+
+La gráfica muestra el esfuerzo nominal de referencia calculado
+a partir de P/A. El esfuerzo máximo de 26.37 MPa se mantiene
+como referencia del análisis ANSYS realizado en el artículo y
+no se presenta como si hubiera sido recalculado por este HTML.
+
+</div>
+
+<div class="chart">
+
+<canvas id="stressChart"></canvas>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     MODAL
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Gráfica — Frecuencias modales reportadas
+</h2>
+
+<div class="chart">
+
+<canvas id="modalChart"></canvas>
+
+</div>
+
+<p class="small">
+
+Valores reportados en el artículo:
+7.556, 8.377, 9.563, 10.450, 11.880 y 11.109 Hz.
+
+</p>
+
+</section>
+
+
+<!-- =========================================================
+     RESULTADOS ANSYS
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Resultados del análisis estructural
+</h2>
+
+<table>
+
+<tr>
+<th>Variable</th>
+<th>Resultado</th>
+<th>Procedencia</th>
+</tr>
+
+<tr>
+<td>Esfuerzo equivalente máximo</td>
+<td>26.37 MPa</td>
+<td>ANSYS / artículo</td>
+</tr>
+
+<tr>
+<td>Zona de concentración</td>
+<td>Cercana al agujero del pasador</td>
+<td>ANSYS / artículo</td>
+</tr>
+
+<tr>
+<td>Deformación X</td>
+<td>7.41 μm</td>
+<td>ANSYS / artículo</td>
+</tr>
+
+<tr>
+<td>Deformación Y</td>
+<td>4.35 μm</td>
+<td>ANSYS / artículo</td>
+</tr>
+
+<tr>
+<td>Deformación Z</td>
+<td>7.42 μm</td>
+<td>ANSYS / artículo</td>
+</tr>
+
+<tr>
+<td>Deformación total</td>
+<td>31.9 μm</td>
+<td>ANSYS / artículo</td>
+</tr>
+
+<tr>
+<td>Límite elástico</td>
+<td>355 MPa</td>
+<td>Material</td>
+</tr>
+
+</table>
+
+</section>
+
+
+<!-- =========================================================
+     FATIGA
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Análisis de fatiga — módulo complementario
+</h2>
+
+<div class="warning">
+
+<b>Importante:</b>
+
+El artículo base no presenta una curva S-N ni una vida a fatiga.
+Por ello, esta sección se presenta como un <b>análisis
+complementario académico</b> y no como un resultado obtenido
+por los autores del artículo.
+
+</div>
+
+
+<h3>Parámetros utilizados</h3>
+
+<div class="fatigue-grid">
+
+<div class="fatigue-card">
+
+<small>Esfuerzo máximo</small>
+
+<strong>
+26.37 MPa
+</strong>
+
+</div>
+
+
+<div class="fatigue-card">
+
+<small>Esfuerzo mínimo asumido</small>
+
+<strong>
+0 MPa
+</strong>
+
+</div>
+
+
+<div class="fatigue-card">
+
+<small>Límite elástico</small>
+
+<strong>
+355 MPa
+</strong>
+
+</div>
+
+
+<div class="fatigue-card">
+
+<small>Límite de resistencia Se</small>
+
+<strong>
+<span id="seDisplay">177.50</span> MPa
+</strong>
+
+</div>
+
+
+<div class="fatigue-card">
+
+<small>Esfuerzo alternante</small>
+
+<strong>
+<span id="sigmaA">13.19</span> MPa
+</strong>
+
+</div>
+
+
+<div class="fatigue-card">
+
+<small>Esfuerzo medio</small>
+
+<strong>
+<span id="sigmaM">13.19</span> MPa
+</strong>
+
+</div>
+
+</div>
+
+
+<h3>
+1. Esfuerzo alternante
+</h3>
+
+<div class="formula-box">
+
+<div class="formula">
+σ<sub>a</sub> = (σ<sub>max</sub> − σ<sub>min</sub>) / 2
+</div>
+
+<div class="substitution">
+σa = (26.37 − 0) / 2
+</div>
+
+<div class="formula">
+σ<sub>a</sub> = <span id="sigmaA2">13.19</span> MPa
+</div>
+
+</div>
+
+
+<h3>
+2. Esfuerzo medio
+</h3>
+
+<div class="formula-box">
+
+<div class="formula">
+σ<sub>m</sub> = (σ<sub>max</sub> + σ<sub>min</sub>) / 2
+</div>
+
+<div class="substitution">
+σm = (26.37 + 0) / 2
+</div>
+
+<div class="formula">
+σ<sub>m</sub> = <span id="sigmaM2">13.19</span> MPa
+</div>
+
+</div>
+
+
+<h3>
+3. Límite de resistencia utilizado
+</h3>
+
+<div class="formula-box">
+
+<div class="formula">
+S<sub>e</sub> ≈ 0.5 σ<sub>y</sub>
+</div>
+
+<div class="substitution">
+Se = 0.5 × 355
+</div>
+
+<div class="formula">
+S<sub>e</sub> = <span id="seEquation">177.50</span> MPa
+</div>
+
+</div>
+
+<div class="note">
+
+Este valor se utiliza únicamente como <b>supuesto académico
+conservador</b> para poder mostrar el procedimiento de fatiga.
+No corresponde a una curva S-N presentada en el artículo.
+
+</div>
+
+
+<h3>
+4. Criterio de Soderberg
+</h3>
+
+<div class="formula-box">
+
+<div class="formula">
+
+σ<sub>a</sub>/S<sub>e</sub>
++
+σ<sub>m</sub>/σ<sub>y</sub>
+≤ 1
+
+</div>
+
+<div class="substitution" id="soderbergSub">
+
+13.19 / 177.50 + 13.19 / 355 = 0.1115
+
+</div>
+
+<div class="formula">
+
+Utilización =
+<span id="soderbergUtil">0.1115</span>
+
+</div>
+
+</div>
+
+
+<h3>
+5. Factor de seguridad a fatiga
+</h3>
+
+<div class="formula-box">
+
+<div class="formula">
+
+n<sub>f</sub> =
+
+1 /
+[
+σ<sub>a</sub>/S<sub>e</sub>
++
+σ<sub>m</sub>/σ<sub>y</sub>
+]
+
+</div>
+
+<div class="substitution">
+
+n<sub>f</sub> =
+1 / 0.1115
+
+</div>
+
+<div class="formula">
+
+n<sub>f</sub> =
+<span id="fatigueFS">8.97</span>
+
+</div>
+
+</div>
+
+
+<div class="good">
+
+<b>Resultado del módulo complementario:</b>
+
+El criterio de Soderberg calculado con los supuestos indicados
+produce un factor de seguridad a fatiga de aproximadamente
+
+<strong>
+<span id="fatigueFS2">8.97</span>
+</strong>.
+
+</div>
+
+
+<p class="small">
+
+Este resultado no representa una vida exacta en ciclos. Para
+obtener una vida a fatiga real sería necesario disponer de
+propiedades S-N experimentales del acero 45#, condiciones de
+superficie, concentración de esfuerzos, tipo de carga y
+características reales del ciclo de trabajo.
+
+</p>
+
+</section>
+
+
+<!-- =========================================================
+     DIAGRAMA DE SODERBERG
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Gráfica — Criterio de Soderberg
+</h2>
+
+<div class="info">
+
+La gráfica representa la relación entre esfuerzo medio y esfuerzo
+alternante. El punto de operación se compara con la línea límite
+del criterio de Soderberg.
+
+</div>
+
+<div class="chart">
+
+<canvas id="soderbergChart"></canvas>
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     OBSERVACIONES
+     ========================================================= -->
+
+<section class="card">
+
+<h2>
+Interpretación del modelo
+</h2>
+
+<div class="note">
+
+<b>1.</b> Los parámetros A, B y C permiten modificar visualmente
+la geometría del martillo.
+
+<br><br>
+
+<b>2.</b> La velocidad del rotor modifica directamente la
+velocidad angular y la frecuencia calculada.
+
+<br><br>
+
+<b>3.</b> La fuerza de impacto se calcula mediante el principio
+impulso-cantidad de movimiento.
+
+<br><br>
+
+<b>4.</b> El esfuerzo máximo de 26.37 MPa y la deformación total
+de 31.9 μm corresponden a los resultados de ANSYS reportados
+por el artículo.
+
+<br><br>
+
+<b>5.</b> El factor de seguridad estático se calcula en este
+modelo mediante la relación entre el límite elástico y el
+esfuerzo máximo.
+
+<br><br>
+
+<b>6.</b> El módulo de fatiga es complementario y utiliza
+supuestos explícitos para mostrar el procedimiento matemático.
+No se atribuye al artículo una vida a fatiga que este no reporta.
+
+</div>
+
+</section>
+
+
+</main>
+
+
+<footer>
+
+Modelo académico basado en:
+“Design and Experimental Optimization of V-Shaped Hammer for Hammer Mill”.
+
+</footer>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script>
+
+
+/* =========================================================
+   CONSTANTES DEL MODELO
+   ========================================================= */
+
+const C = {
+
+    K2: 0.42,
+
+    B: 170,
+
+    delta: 24,
+
+    m: 0.00493,
+
+    v1: 85.2,
+
+    v2: 45.6,
+
+    dt: 0.001,
+
+    yield: 355,
+
+    stress: 26.37,
+
+    stressMin: 0,
+
+    areaV: 348,
+
+    R1: 195,
+
+    Li: 92,
+
+    dR: 9,
+
+    /* Supuesto académico para fatiga */
+    SeFactor: 0.50
+
+};
+
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+
+const S = {
+
+    a: 160,
+
+    b: 110,
+
+    c: 24,
+
+    rpm: 4400,
+
+    rotating: true
+
+};
+
+
+const $ = id => document.getElementById(id);
+
+
+/* =========================================================
+   VARIABLES THREE.JS
+   ========================================================= */
+
+let scene;
+
+let camera;
+
+let renderer;
+
+let controls;
+
+let rotor;
+
+let hammerGroups = [];
+
+
+/* =========================================================
+   VARIABLES DE GRÁFICAS
+   ========================================================= */
+
+let freqChart;
+
+let stressChart;
+
+let modalChart;
+
+let soderbergChart;
+
+
+/* =========================================================
+   CÁLCULOS PRINCIPALES
+   ========================================================= */
+
+function calc() {
+
+    /* -----------------------------------------
+       VELOCIDAD ANGULAR
+       ----------------------------------------- */
+
+    const omega =
+        2 *
+        Math.PI *
+        S.rpm /
+        60;
+
+
+    /* -----------------------------------------
+       FRECUENCIA
+       ----------------------------------------- */
+
+    const f =
+        S.rpm /
+        60;
+
+
+    /* -----------------------------------------
+       ESPESOR
+       ----------------------------------------- */
+
+    const z =
+        C.K2 *
+        C.B /
+        C.delta;
+
+
+    /* -----------------------------------------
+       FUERZA DE IMPACTO
+       ----------------------------------------- */
+
+    const P =
+        C.m *
+        Math.abs(
+            C.v1 -
+            C.v2
+        ) /
+        C.dt;
+
+
+    /* -----------------------------------------
+       ESFUERZO NOMINAL
+       ----------------------------------------- */
+
+    const sigmaNom =
+        P /
+        C.areaV;
+
+
+    /* -----------------------------------------
+       FACTOR DE SEGURIDAD ESTÁTICO
+       ----------------------------------------- */
+
+    const fs =
+        C.yield /
+        C.stress;
+
+
+    /* -----------------------------------------
+       GEOMETRÍA RADIAL
+       ----------------------------------------- */
+
+    const r =
+        C.R1 -
+        C.dR -
+        C.Li;
+
+
+    /* -----------------------------------------
+       FATIGA
+       ----------------------------------------- */
+
+    const sigmaMax =
+        C.stress;
+
+    const sigmaMin =
+        C.stressMin;
+
+    const sigmaA =
+        (
+            sigmaMax -
+            sigmaMin
+        ) / 2;
+
+    const sigmaM =
+        (
+            sigmaMax +
+            sigmaMin
+        ) / 2;
+
+    const Se =
+        C.SeFactor *
+        C.yield;
+
+    const soderbergUtil =
+        sigmaA / Se +
+        sigmaM / C.yield;
+
+    const fatigueFS =
+        1 /
+        soderbergUtil;
+
+
+    /* =====================================================
+       ACTUALIZAR INTERFAZ
+       ===================================================== */
+
+    $("aOut").textContent =
+        S.a + "°";
+
+    $("bOut").textContent =
+        S.b + "°";
+
+    $("cOut").textContent =
+        S.c + " mm";
+
+    $("rpmOut").textContent =
+        S.rpm + " rpm";
+
+
+    $("omega").textContent =
+        omega.toFixed(2) +
+        " rad/s";
+
+    $("freq").textContent =
+        f.toFixed(2) +
+        " Hz";
+
+
+    $("thickness").textContent =
+        z.toFixed(2) +
+        " mm";
+
+
+    $("force").textContent =
+        P.toFixed(1) +
+        " N";
+
+
+    $("safety").textContent =
+        fs.toFixed(2);
+
+
+    $("r1").textContent =
+        r.toFixed(0) +
+        " mm";
+
+
+    /* =====================================================
+       ECUACIONES
+       ===================================================== */
+
+    $("eqOmega").textContent =
+        omega.toFixed(2) +
+        " rad/s";
+
+    $("eqFreq").textContent =
+        f.toFixed(2) +
+        " Hz";
+
+    $("eqThickness").textContent =
+        z.toFixed(2) +
+        " mm";
+
+    $("eqForce").textContent =
+        P.toFixed(1) +
+        " N";
+
+    $("eqStress").textContent =
+        sigmaNom.toFixed(2) +
+        " MPa";
+
+    $("eqFS").textContent =
+        fs.toFixed(2);
+
+    $("eqR").textContent =
+        r.toFixed(0) +
+        " mm";
+
+
+    /* =====================================================
+       ESFUERZO
+       ===================================================== */
+
+    $("forceFormulaResult").textContent =
+        P.toFixed(1);
+
+    $("nominalStress").textContent =
+        sigmaNom.toFixed(2);
+
+    $("stressNomTable").textContent =
+        sigmaNom.toFixed(2) +
+        " MPa";
+
+    $("fsEquation").textContent =
+        fs.toFixed(2);
+
+
+    $("forceEquation").textContent =
+        "P = " +
+        C.m +
+        " × (" +
+        C.v1 +
+        " − " +
+        C.v2 +
+        ") / " +
+        C.dt +
+        " = " +
+        P.toFixed(1) +
+        " N";
+
+
+    $("nominalStressEquation").textContent =
+        "σnom = " +
+        P.toFixed(1) +
+        " / " +
+        C.areaV +
+        " = " +
+        sigmaNom.toFixed(2) +
+        " MPa";
+
+
+    /* =====================================================
+       FATIGA
+       ===================================================== */
+
+    $("sigmaA").textContent =
+        sigmaA.toFixed(2) +
+        " MPa";
+
+    $("sigmaM").textContent =
+        sigmaM.toFixed(2) +
+        " MPa";
+
+    $("sigmaA2").textContent =
+        sigmaA.toFixed(2);
+
+    $("sigmaM2").textContent =
+        sigmaM.toFixed(2);
+
+    $("seDisplay").textContent =
+        Se.toFixed(2);
+
+    $("seEquation").textContent =
+        Se.toFixed(2);
+
+    $("soderbergUtil").textContent =
+        soderbergUtil.toFixed(4);
+
+    $("fatigueFS").textContent =
+        fatigueFS.toFixed(2);
+
+    $("fatigueFS2").textContent =
+        fatigueFS.toFixed(2);
+
+
+    $("soderbergSub").textContent =
+        sigmaA.toFixed(2) +
+        " / " +
+        Se.toFixed(2) +
+        " + " +
+        sigmaM.toFixed(2) +
+        " / " +
+        C.yield +
+        " = " +
+        soderbergUtil.toFixed(4);
+
+
+    updateHammers();
+
+    updateFreqPoint();
+
+    updateStressChart();
+
+    updateSoderbergChart();
+
+}
+
+
+/* =========================================================
+   CREACIÓN DEL MARTILLO
+   ========================================================= */
+
+function hammer() {
+
+    const g =
+        new THREE.Group();
+
+
+    const mat =
+        new THREE.MeshStandardMaterial({
+
+            color: 0xd9822b,
+
+            metalness: 0.55,
+
+            roughness: 0.35
+
+        });
+
+
+    /* CUERPO */
+
+    const body =
+        new THREE.Mesh(
+
+            new THREE.BoxGeometry(
+                0.16,
+                1.15,
+                0.10
+            ),
+
+            mat
+
+        );
+
+
+    body.position.y =
+        -0.48;
+
+
+    g.add(body);
+
+
+    /* CABEZA */
+
+    const head =
+        new THREE.Mesh(
+
+            new THREE.BoxGeometry(
+                0.42,
+                0.18,
+                0.10
+            ),
+
+            mat
+
+        );
+
+
+    head.position.set(
+        0,
+        0.18,
+        0
+    );
+
+
+    head.rotation.z =
+        THREE.MathUtils.degToRad(-20);
+
+
+    g.add(head);
+
+
+    /* AGUJERO */
+
+    const hole =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                0.065,
+                0.065,
+                0.105,
+                24
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color: 0x263238
+            })
+
+        );
+
+
+    hole.rotation.x =
+        Math.PI / 2;
+
+
+    hole.position.y =
+        0.40;
+
+
+    g.add(hole);
+
+
+    return g;
+
+}
+
+
+/* =========================================================
+   INICIALIZACIÓN 3D
+   ========================================================= */
+
+function init3D() {
+
+    const el =
+        $("viewer");
+
+
+    scene =
+        new THREE.Scene();
+
+
+    scene.background =
+        new THREE.Color(0xdce5ea);
+
+
+    camera =
+        new THREE.PerspectiveCamera(
+
+            45,
+
+            el.clientWidth /
+            el.clientHeight,
+
+            0.1,
+
+            100
+
+        );
+
+
+    camera.position.set(
+        5,
+        3.2,
+        5.5
+    );
+
+
+    renderer =
+        new THREE.WebGLRenderer({
+
+            antialias: true
+
+        });
+
+
+    renderer.setPixelRatio(
+
+        Math.min(
+            window.devicePixelRatio,
+            2
+        )
+
+    );
+
+
+    renderer.setSize(
+
+        el.clientWidth,
+        el.clientHeight
+
+    );
+
+
+    el.appendChild(
+        renderer.domElement
+    );
+
+
+    controls =
+        new THREE.OrbitControls(
+            camera,
+            renderer.domElement
+        );
+
+
+    controls.enableDamping =
+        true;
+
+
+    controls.target.set(
+        0,
+        0,
+        0
+    );
+
+
+    /* ILUMINACIÓN */
+
+    scene.add(
+
+        new THREE.HemisphereLight(
+            0xffffff,
+            0x73808a,
+            2
+        )
+
+    );
+
+
+    const dl =
+        new THREE.DirectionalLight(
+            0xffffff,
+            2
+        );
+
+
+    dl.position.set(
+        5,
+        7,
+        5
+    );
+
+
+    scene.add(dl);
+
+
+    /* PISO */
+
+    const floor =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                3.1,
+                3.1,
+                0.12,
+                64
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color: 0xb7c2c8,
+                roughness: 0.7
+            })
+
+        );
+
+
+    floor.position.y =
+        -1.35;
+
+
+    scene.add(floor);
+
+
+    /* CARCASA */
+
+    const chamber =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                2.55,
+                2.55,
+                1.25,
+                64,
+                1,
+                true
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0xb9c3c8,
+
+                transparent: true,
+
+                opacity: 0.32,
+
+                side: THREE.DoubleSide
+
+            })
+
+        );
+
+
+    chamber.rotation.z =
+        Math.PI / 2;
+
+    /* Eleva ligeramente la carcasa para que no invada la base visual. */
+    chamber.position.y = 0.40;
+
+    scene.add(chamber);
+
+
+    /* EJE */
+
+    const shaft =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+                0.17,
+                0.17,
+                5.4,
+                32
+            ),
+
+            new THREE.MeshStandardMaterial({
+
+                color: 0x438b55,
+
+                metalness: 0.8,
+
+                roughness: 0.25
+
+            })
+
+        );
+
+
+    shaft.rotation.z =
+        Math.PI / 2;
+
+    /* Mantiene el eje alineado con el rotor elevado. */
+    shaft.position.y = 0.40;
+
+    scene.add(shaft);
+
+
+    /* ROTOR */
+
+    rotor =
+        new THREE.Group();
+
+    /* Se eleva todo el rotor 0.40 unidades respecto a la base. */
+    rotor.position.y = 0.40;
+
+    scene.add(rotor);
+
+
+    const diskMat =
+        new THREE.MeshStandardMaterial({
+
+            color: 0x397aa5,
+
+            metalness: 0.7,
+
+            roughness: 0.3
+
+        });
+
+
+    /* DISCOS */
+
+    for (
+        const x of [-0.72, 0.72]
+    ) {
+
+        const d =
+            new THREE.Mesh(
+
+                new THREE.CylinderGeometry(
+                    1.03,
+                    1.03,
+                    0.18,
+                    48
+                ),
+
+                diskMat
+
+            );
+
+
+        d.rotation.z =
+            Math.PI / 2;
+
+
+        d.position.x =
+            x;
+
+
+        rotor.add(d);
+
+    }
+
+
+    /* BARRAS */
+
+    for (
+        let i = 0;
+        i < 4;
+        i++
+    ) {
+
+        const b =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    2,
+                    0.10,
+                    0.10
+                ),
+
+                diskMat
+
+            );
+
+
+        b.rotation.x =
+            i *
+            Math.PI /
+            2;
+
+
+        rotor.add(b);
+
+    }
+
+
+    /* 24 MARTILLOS */
+
+    for (
+        let i = 0;
+        i < 24;
+        i++
+    ) {
+
+        const h =
+            hammer();
+
+
+        const ang =
+            i *
+            Math.PI *
+            2 /
+            24;
+
+
+        h.position.set(
+
+            0,
+
+            Math.cos(ang) *
+            1.25,
+
+            Math.sin(ang) *
+            1.25
+
+        );
+
+
+        h.rotation.x =
+            ang;
+
+
+        rotor.add(h);
+
+
+        hammerGroups.push(h);
+
+    }
+
+
+    window.addEventListener(
+        "resize",
+        resize
+    );
+
+
+    animate();
+
+}
+
+
+/* =========================================================
+   ACTUALIZACIÓN DE MARTILLOS
+
+   SOLO modifica la visualización 3D. Los cálculos, gráficas
+   y resultados del HTML original se mantienen sin cambios.
+   ========================================================= */
+
+function updateHammers() {
+
+    /*
+       A = Ángulo de cabeza
+       Rango: 150° - 160°
+
+       Amplificación visual: 4x
+       Para que el cambio sea claramente visible.
+    */
+    const headAngle =
+        THREE.MathUtils.degToRad(
+            -20 + (S.a - 155) * 4
+        );
+
+    /*
+       B = Ángulo de inclinación
+       Rango: 100° - 120°
+
+       Amplificación visual: 3x
+    */
+    const inclination =
+        THREE.MathUtils.degToRad(
+            (S.b - 110) * 3
+        );
+
+    /*
+       C = Distancia de cabeza
+       Rango: 24 - 30 mm
+
+       Antes C solamente cambiaba ligeramente la escala.
+       Ahora C modifica de forma MUY visible la posición
+       radial de los 24 martillos.
+
+       24 mm -> radio visual 1.20
+       30 mm -> radio visual 1.85
+    */
+    const cNormalized =
+        (S.c - 24) / (30 - 24);
+
+    const visualRadius =
+        1.20 + cNormalized * 0.65;
+
+    hammerGroups.forEach((h, i) => {
+
+        const ang =
+            i * Math.PI * 2 / 24;
+
+        /* Posición radial visible */
+        h.position.set(
+            0,
+            Math.cos(ang) * visualRadius,
+            Math.sin(ang) * visualRadius
+        );
+
+        /* Orientación radial */
+        h.rotation.x = ang;
+
+        /* B: inclinación del cuerpo */
+        h.rotation.z = inclination;
+
+        /* A: orientación de la cabeza */
+        h.children[1].rotation.z = headAngle;
+
+        /*
+           Pequeña variación para conservar la apariencia del
+           conjunto sin alterar sus dimensiones reales.
+        */
+        h.rotation.z += Math.sin(i) * 0.005;
+    });
+}
+
+
+/* =========================================================
+   ANIMACIÓN
+   ========================================================= */
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    if (
+        S.rotating
+    ) {
+
+        rotor.rotation.x +=
+
+            S.rpm /
+            4400 *
+            0.13;
+
+    }
+
+
+    controls.update();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+/* =========================================================
+   REDIMENSIONAMIENTO
+   ========================================================= */
+
+function resize() {
+
+    const el =
+        $("viewer");
+
+
+    camera.aspect =
+        el.clientWidth /
+        el.clientHeight;
+
+
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize(
+
+        el.clientWidth,
+        el.clientHeight
+
+    );
+
+}
+
+
+/* =========================================================
+   GRÁFICA DE FRECUENCIA
+   ========================================================= */
+
+function initFreqChart() {
+
+    freqChart =
+        new Chart(
+
+            $("freqChart"),
+
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels: [
+
+                        1000,
+                        1500,
+                        2000,
+                        2500,
+                        3000,
+                        3500,
+                        4000,
+                        4400
+
+                    ],
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Frecuencia de excitación (Hz)",
+
+                            data: [
+
+                                16.67,
+                                25,
+                                33.33,
+                                41.67,
+                                50,
+                                58.33,
+                                66.67,
+                                73.33
+
+                            ],
+
+                            borderWidth: 3,
+
+                            tension: 0.2,
+
+                            pointRadius: 4
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        x: {
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Velocidad (rpm)"
+
+                            }
+
+                        },
+
+                        y: {
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Frecuencia (Hz)"
+
+                            },
+
+                            beginAtZero: true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   GRÁFICA DE ESFUERZO
+   ========================================================= */
+
+function initStressChart() {
+
+    const rpmValues = [
+
+        1000,
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000,
+        4400
+
+    ];
+
+
+    const force =
+        C.m *
+        Math.abs(
+            C.v1 -
+            C.v2
+        ) /
+        C.dt;
+
+
+    const nominal =
+        force /
+        C.areaV;
+
+
+    const nominalData =
+        rpmValues.map(
+            () => nominal
+        );
+
+
+    const ansysData =
+        rpmValues.map(
+            () => C.stress
+        );
+
+
+    stressChart =
+        new Chart(
+
+            $("stressChart"),
+
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels:
+                        rpmValues,
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Esfuerzo nominal P/A (MPa)",
+
+                            data:
+                                nominalData,
+
+                            borderWidth:
+                                3,
+
+                            tension:
+                                0.2,
+
+                            pointRadius:
+                                4
+
+                        },
+
+                        {
+
+                            label:
+                                "Esfuerzo máximo ANSYS reportado (MPa)",
+
+                            data:
+                                ansysData,
+
+                            borderWidth:
+                                2,
+
+                            borderDash:
+                                [7,5],
+
+                            pointRadius:
+                                0
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        x: {
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Velocidad (rpm)"
+
+                            }
+
+                        },
+
+                        y: {
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Esfuerzo (MPa)"
+
+                            },
+
+                            beginAtZero: true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   ACTUALIZAR GRÁFICA DE ESFUERZO
+   ========================================================= */
+
+function updateStressChart() {
+
+    if (!stressChart) {
+        return;
+    }
+
+
+    const force =
+        C.m *
+        Math.abs(
+            C.v1 -
+            C.v2
+        ) /
+        C.dt;
+
+
+    const nominal =
+        force /
+        C.areaV;
+
+
+    stressChart.data.datasets[0].data =
+
+        stressChart.data.labels.map(
+            () => nominal
+        );
+
+
+    stressChart.data.datasets[1].data =
+
+        stressChart.data.labels.map(
+            () => C.stress
+        );
+
+
+    stressChart.update("none");
+
+}
+
+
+/* =========================================================
+   GRÁFICA MODAL
+   ========================================================= */
+
+function initModalChart() {
+
+    modalChart =
+
+        new Chart(
+
+            $("modalChart"),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels: [
+
+                        "Modo 1",
+                        "Modo 2",
+                        "Modo 3",
+                        "Modo 4",
+                        "Modo 5",
+                        "Modo 6"
+
+                    ],
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Frecuencia natural (Hz)",
+
+                            data: [
+
+                                7.556,
+                                8.377,
+                                9.563,
+                                10.450,
+                                11.880,
+                                11.109
+
+                            ],
+
+                            borderWidth:
+                                1
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        y: {
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Hz"
+
+                            },
+
+                            beginAtZero:
+                                true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   GRÁFICA DE SODERBERG
+   ========================================================= */
+
+function initSoderbergChart() {
+
+    const Se =
+        C.SeFactor *
+        C.yield;
+
+
+    const meanValues = [
+
+        0,
+        50,
+        100,
+        150,
+        200,
+        250,
+        300,
+        C.yield
+
+    ];
+
+
+    const limitData =
+        meanValues.map(
+
+            m =>
+
+                Se *
+                (
+                    1 -
+                    m /
+                    C.yield
+                )
+
+        );
+
+
+    const sigmaMax =
+        C.stress;
+
+
+    const sigmaA =
+        (
+            sigmaMax -
+            C.stressMin
+        ) / 2;
+
+
+    const sigmaM =
+        (
+            sigmaMax +
+            C.stressMin
+        ) / 2;
+
+
+    soderbergChart =
+
+        new Chart(
+
+            $("soderbergChart"),
+
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels:
+                        meanValues,
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Límite de Soderberg",
+
+                            data:
+                                limitData,
+
+                            borderWidth:
+                                3,
+
+                            tension:
+                                0.1,
+
+                            pointRadius:
+                                3
+
+                        },
+
+                        {
+
+                            label:
+                                "Punto de operación",
+
+                            data:
+                                meanValues.map(
+
+                                    m =>
+
+                                        Math.abs(
+                                            m -
+                                            sigmaM
+                                        ) < 0.0001
+
+                                            ? sigmaA
+
+                                            : null
+
+                                ),
+
+                            borderWidth:
+                                0,
+
+                            pointRadius:
+                                7,
+
+                            showLine:
+                                false
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        x: {
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Esfuerzo medio σm (MPa)"
+
+                            }
+
+                        },
+
+                        y: {
+
+                            title: {
+
+                                display: true,
+
+                                text:
+                                    "Esfuerzo alternante σa (MPa)"
+
+                            },
+
+                            beginAtZero:
+                                true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   ACTUALIZAR SODERBERG
+   ========================================================= */
+
+function updateSoderbergChart() {
+
+    if (!soderbergChart) {
+        return;
+    }
+
+
+    const Se =
+        C.SeFactor *
+        C.yield;
+
+
+    const sigmaMax =
+        C.stress;
+
+
+    const sigmaA =
+        (
+            sigmaMax -
+            C.stressMin
+        ) / 2;
+
+
+    const sigmaM =
+        (
+            sigmaMax +
+            C.stressMin
+        ) / 2;
+
+
+    const meanValues =
+        soderbergChart.data.labels;
+
+
+    soderbergChart.data.datasets[0].data =
+
+        meanValues.map(
+
+            m =>
+
+                Se *
+                (
+                    1 -
+                    m /
+                    C.yield
+                )
+
+        );
+
+
+    soderbergChart.data.datasets[1].data =
+
+        meanValues.map(
+
+            m =>
+
+                Math.abs(
+                    m -
+                    sigmaM
+                ) < 0.0001
+
+                    ? sigmaA
+
+                    : null
+
+        );
+
+
+    soderbergChart.update("none");
+
+}
+
+
+/* =========================================================
+   ACTUALIZAR GRÁFICA DE FRECUENCIA
+   ========================================================= */
+
+function updateFreqPoint() {
+
+    if (!freqChart) {
+        return;
+    }
+
+
+    freqChart.options.plugins = {
+
+        title: {
+
+            display: true,
+
+            text:
+
+                "Punto actual: " +
+
+                S.rpm +
+
+                " rpm = " +
+
+                (
+                    S.rpm /
+                    60
+                ).toFixed(2) +
+
+                " Hz"
+
+        }
+
+    };
+
+
+    freqChart.update("none");
+
+}
+
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+
+$("a").addEventListener(
+
+    "input",
+
+    e => {
+
+        S.a =
+            Number(
+                e.target.value
+            );
+
+        calc();
+
+    }
+
+);
+
+
+$("b").addEventListener(
+
+    "input",
+
+    e => {
+
+        S.b =
+            Number(
+                e.target.value
+            );
+
+        calc();
+
+    }
+
+);
+
+
+$("c").addEventListener(
+
+    "input",
+
+    e => {
+
+        S.c =
+            Number(
+                e.target.value
+            );
+
+        calc();
+
+    }
+
+);
+
+
+$("rpm").addEventListener(
+
+    "input",
+
+    e => {
+
+        S.rpm =
+            Number(
+                e.target.value
+            );
+
+        calc();
+
+    }
+
+);
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+$("reset").addEventListener(
+
+    "click",
+
+    () => {
+
+        S.a =
+            160;
+
+        S.b =
+            110;
+
+        S.c =
+            24;
+
+        S.rpm =
+            4400;
+
+
+        $("a").value =
+            160;
+
+        $("b").value =
+            110;
+
+        $("c").value =
+            24;
+
+        $("rpm").value =
+            4400;
+
+
+        calc();
+
+    }
+
+);
+
+
+/* =========================================================
+   ROTOR
+   ========================================================= */
+
+$("toggle").addEventListener(
+
+    "click",
+
+    () => {
+
+        S.rotating =
+            !S.rotating;
+
+
+        $("toggle").textContent =
+
+            S.rotating
+
+                ? "Pausar rotor"
+
+                : "Reanudar rotor";
+
+
+        $("status").textContent =
+
+            S.rotating
+
+                ? "Rotor: girando"
+
+                : "Rotor: pausado";
+
+    }
+
+);
+
+
+/* =========================================================
+   INICIO
+   ========================================================= */
+
+window.addEventListener(
+
+    "load",
+
+    () => {
+
+        init3D();
+
+        initFreqChart();
+
+        initStressChart();
+
+        initModalChart();
+
+        initSoderbergChart();
+
+        calc();
+
+    }
+
+);
+
+</script>
+
+</body>
+</html>
